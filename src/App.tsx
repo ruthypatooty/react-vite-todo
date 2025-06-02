@@ -21,7 +21,7 @@ function App() {
     })
   }
   function toggleTodo(id, completed) {
-
+    ;;;;;
   }
 
   return (
