@@ -16,14 +16,28 @@ function App() {
 
     setTodos(currentTodos => {
       return [
-        ...currentTodos, { id: crypto.randomUUID(), title: newItem, completed: false },
+        ...currentTodos, { id: crypto.randomUUID(), title: newItem, completed: false }
       ]
     })
-  }
-  function toggleTodo(id, completed) {
-    ;;;;;
+    setNewItem("")
   }
 
+  function toggleTodo(id: string, completed: boolean) {
+    setTodos(currentTodos => {
+      return (currentTodos.map(todo => {
+        if (todo.id === id) {
+          return { ...todo, completed }
+        }
+        return todo;
+      }))
+    })
+  }
+
+  function deleteItem(id: string) {
+    setTodos(currentTodos => {
+      return currentTodos.filter(e => e.id !== id)
+    });
+  }
   return (
     <>
       <div className="App">
@@ -39,8 +53,13 @@ function App() {
           {todos.map(todo => {
             return (
               <li key={todo.id}>
-                <label><input type="checkbox" checked={todo.completed} onClick={e => toggleTodo(todo.id, e.target} /> {todo.title}</label>
-                <button className="btn btn-danger">Delerttt</button>
+                <label>
+                  <input type="checkbox" checked={todo.completed} onChange={e => {
+                    let check = e.target as HTMLInputElement;
+                    toggleTodo(todo.id, check.checked);
+                  }} /> {todo.title}
+                </label>
+                <button onClick={e => deleteItem(todo.id)} className="btn btn-danger">Delerttt</button>
 
               </li>
             )
