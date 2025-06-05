@@ -1,25 +1,32 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
+import TodoForm from './TodoForm';
+import { TodoList } from './TodoList';
 
-interface Props {
+export interface Props {
   id: string;
   title: string;
   completed: boolean;
 }
 
 function App() {
-  const [newItem, setNewItem] = useState("")
-  const [todos, setTodos] = useState<Props[]>([]);
+  const [todos, setTodos] = useState<Props[]>(() => {
+    const localVal = localStorage.getItem("TODOS")
+    if (localVal == null) return []
 
-  function handleSubmit(e: any) {
-    e.preventDefault();
+    return JSON.parse(localVal);
+  });
 
+  useEffect(() => {
+    localStorage.setItem("TODOS", JSON.stringify(todos))
+  }, [todos])
+
+  function addTodo(title: string) {
     setTodos(currentTodos => {
       return [
-        ...currentTodos, { id: crypto.randomUUID(), title: newItem, completed: false }
+        ...currentTodos, { id: crypto.randomUUID(), title, completed: false }
       ]
     })
-    setNewItem("")
   }
 
   function toggleTodo(id: string, completed: boolean) {
@@ -41,30 +48,9 @@ function App() {
   return (
     <>
       <div className="App">
-        <form onSubmit={handleSubmit} className="new-item-form">
-          <div className="form-row">
-            <label htmlFor="item">New Item</label>
-            <input value={newItem} onChange={e => setNewItem(e.target.value)} type="text" id="text"></input>
-          </div>
-          <button className="btn">Add</button>
-        </form>
-        <h1 className="header">Todo List</h1>
-        <ul >
-          {todos.map(todo => {
-            return (
-              <li key={todo.id}>
-                <label>
-                  <input type="checkbox" checked={todo.completed} onChange={e => {
-                    let check = e.target as HTMLInputElement;
-                    toggleTodo(todo.id, check.checked);
-                  }} /> {todo.title}
-                </label>
-                <button onClick={e => deleteItem(todo.id)} className="btn btn-danger">Delerttt</button>
-
-              </li>
-            )
-          })}
-        </ul>
+        < TodoForm onSubmit={addTodo} />
+        <h1 className="header">ToDo List</h1>
+        < TodoList todos={todos} toggleTodo={toggleTodo} deleteItem={deleteItem} />
       </div>
     </>
   )
