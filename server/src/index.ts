@@ -89,8 +89,23 @@ app.use(express.json());
 
 app.get('/api/todos', async(req,res)=>{
     try{
-        const todos = await Todo
+        const todos = await Todo.findAll(); // COMPLETE THIS LINE
+        res.json(todos); // SEND THE DATA BACK
     }catch(error){
-
+        console.error('Error fetching todos:', error); // Log the error
+        res.status(500).json({ error: 'Failed to fetch todos' }); // Send an error response
     }
-})
+});
+
+// Add other routes (POST, PATCH, DELETE) as per the previous example
+
+// --- START THE SERVER ---
+async function startServer() {
+  await initDatabase(); // This calls your connection test
+  app.listen(BACKEND_PORT, () => {
+    console.log(`Backend server running on http://localhost:${BACKEND_PORT}`);
+    console.log(`CORS enabled for http://localhost:5173`);
+  });
+}
+
+startServer();

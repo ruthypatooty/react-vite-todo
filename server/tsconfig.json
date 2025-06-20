@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",       // Target JavaScript version for compilation
+    "module": "Node16",       // Module system to use for compiled JS (matches modern Node.js)
+    "outDir": "./dist",       // WHERE to put the compiled JavaScript files
+    "rootDir": "./src",       // WHERE to find your TypeScript source files
+    "strict": true,           // Enable all strict type-checking options (recommended)
+    "esModuleInterop": true,  // Allow default imports from modules with no default export
+    "skipLibCheck": true,     // Skip type checking of declaration files (faster)
+    "forceConsistentCasingInFileNames": true, // Ensure consistent file casing
+    "resolveJsonModule": true // Allow importing JSON modules
+  },
+  "include": ["src/**/*.ts"], // WHICH files to include for compilation (all .ts files in src and its subdirectories)
+  "exclude": ["node_modules"] // WHICH files to exclude from compilation
+}
