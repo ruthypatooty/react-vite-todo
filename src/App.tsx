@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import TodoForm from './TodoForm';
 import { TodoList } from './TodoList';
@@ -7,53 +7,111 @@ export interface Props {
   id: string;
   title: string;
   completed: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-function App() {
-  const [todos, setTodos] = useState<Props[]>(() => {
-    const localVal = localStorage.getItem("TODOS")
-    if (localVal == null) return []
+// Define backend URL
+const API_BASE_URL = 'http://localhost:3001/api/todos';
 
-    return JSON.parse(localVal);
-  });
+function App() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [todos, setTodos] = useState<Props[]>([]);
+
+  const fetchTodos = useCallback(async()=>{
+    setLoading(true);
+    setError(null);
+    try{
+      const res = await fetch(API_BASE_URL);
+      if(!res.ok){
+        throw new Error(`http error! ${res.status}`);
+      }
+
+      const data: Props[] = await res.json();
+      setTodos(data.map(todo =>({...todo, id: String(todo.id)})));
+
+    }catch(error){
+      console.error("failed to fetchtodos", error);
+      setError("failed to fetchtodos");
+    }finally{
+      setLoading(false);
+    }
+  },[]);
 
   useEffect(() => {
-    localStorage.setItem("TODOS", JSON.stringify(todos))
-  }, [todos])
+    fetchTodos();
+  }, [fetchTodos])
 
-  function addTodo(title: string) {
-    setTodos(currentTodos => {
-      return [
-        ...currentTodos, { id: crypto.randomUUID(), title, completed: false }
-      ]
-    })
-  }
+  const addTodo = useCallback(async (title: string)=>{
+    try{
+      const res = await fetch(API_BASE_URL,{
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({title}),
+      })
+      if(!res.ok){
+        throw new Error(`error here addtodo ${res.status}`);
+      }
+      
+      const newTodo: Props = await res.json();
+      setTodos(currentTodo =>[{
+        ...newTodo,
+        id:String(newTodo.id)},
+        ...currentTodo
+      ])
+    }catch(error){
+      console.error(`error in addtodo ${Response}`);
+    }finally{
+      setLoading(false);
+    }
+  },[]);
 
-  function toggleTodo(id: string, completed: boolean) {
-    setTodos(currentTodos => {
-      return (currentTodos.map(todo => {
-        if (todo.id === id) {
-          return { ...todo, completed }
-        }
-        return todo;
-      }))
-    })
-  }
+  const toogleTodo = useCallback(async(id:string, completed:boolean)=>{
+    try{
+      const response = await fetch(`${API_BASE_URL}/${id}`, { // Note the /:id in the URL
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed }),
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const updatedTodo: Props = await response.json();
+            setTodos(currentTodos =>
+                currentTodos.map(todo =>
+                    todo.id === id ? { ...todo, completed: updatedTodo.completed } : todo
+                )
+            );
+    }catch(error){
+      console.error('error in toggletodo');
+    }
+  },[]);
 
-  function deleteItem(id: string) {
-    setTodos(currentTodos => {
-      return currentTodos.filter(e => e.id !== id)
-    });
-  }
+  const deleteItem = useCallback(async(id:string)=>{
+    try{
+      const response = await fetch(`${API_BASE_URL}/${id}`, { // Note the /:id in the URL
+                method: 'DELETE',
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            setTodos(currentTodos => currentTodos.filter(todo => todo.id !== id));
+    }catch(error){
+      console.error("error in deleteitem");
+    }
+  },[]);
   return (
     <>
-      <div className="App">
-        < TodoForm onSubmit={addTodo} />
-        <h1 className="header">ToDo List</h1>
-        < TodoList todos={todos} toggleTodo={toggleTodo} deleteItem={deleteItem} />
-      </div>
+      <TodoForm onSubmit={addTodo}/>
+      <h1 className="header">Todo List</h1>
+      {loading && <p>Loading todos..</p>}
+      {error && <p className='error'>{error}</p>}
+      {!loading && !error && (
+        <TodoList todos={todos} toggleTodo={toogleTodo} deleteItem={deleteItem} />
+      )}
     </>
-  )
+  );
 }
 
 export default App

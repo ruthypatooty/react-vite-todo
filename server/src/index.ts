@@ -89,7 +89,7 @@ app.use(express.json());
 
 app.get('/api/todos', async(req,res)=>{
     try{
-        const todos = await Todo.findAll(); // COMPLETE THIS LINE
+        const todos = await Todo.findAll({order:[['createdAt','updatedAt']]}); 
         res.json(todos); // SEND THE DATA BACK
     }catch(error){
         console.error('Error fetching todos:', error); // Log the error
@@ -97,7 +97,60 @@ app.get('/api/todos', async(req,res)=>{
     }
 });
 
-// Add other routes (POST, PATCH, DELETE) as per the previous example
+app.post('api/todos', async(req, res)=>{
+    try{
+        const { title } = req.body;
+        const newTodo = await Todo.create({
+            title,
+            completed: false
+        });
+        res.status(201).json(newTodo);
+    }catch(error){
+        console.error('backend error post',error);
+        res.status(500).json({error: 'failed to create todo'});
+    }
+});
+
+app.patch('api/todos/:id', async(req, res)=>{
+    try{
+        const {id} = req.params;
+        const {completed} = req.body;
+
+        const [updatedRows] = await Todo.update(
+            {completed: true},
+            {where:{
+                id: parseInt(id,10)
+            }});
+        if(updatedRows === 0){
+            res.status(404).json({error:'oh noesss'});
+        }
+        const updatedTodo = await Todo.findByPk(parseInt(id,10));
+        res.json(updatedTodo);
+
+    }catch(error){
+        console.error('backend error patch');
+        res.status(500).json('catch block in patch');
+    }
+});
+
+app.delete('/api/todos/:id', async(req, res)=>{
+    try{
+        const {id} = req.params;
+        const deletedRows = await Todo.destroy({
+            where:{
+                id: parseInt(id, 10)
+            },
+        });
+        if(deletedRows === 0){
+            res.status(404).json('id doesnt exist');
+        }
+        
+        res.status(200).json({message: "todo deleted successfully"});
+    }catch(error){
+        console.error('backend error delete');
+        res.status(404).json('catch block in delete');
+    }
+});
 
 // --- START THE SERVER ---
 async function startServer() {
