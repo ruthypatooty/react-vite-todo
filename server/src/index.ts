@@ -80,7 +80,7 @@ const app = express();
 const BACKEND_PORT = process.env.PORT || 3001;
 
 app.use(cors({
-    origin: 'https://localhost:5173',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type'],
 }));
@@ -89,7 +89,7 @@ app.use(express.json());
 
 app.get('/api/todos', async(req,res)=>{
     try{
-        const todos = await Todo.findAll({order:[['createdAt','updatedAt']]}); 
+        const todos = await Todo.findAll({order:[['createdAt','DESC']]}); 
         res.json(todos); // SEND THE DATA BACK
     }catch(error){
         console.error('Error fetching todos:', error); // Log the error
@@ -97,13 +97,16 @@ app.get('/api/todos', async(req,res)=>{
     }
 });
 
-app.post('api/todos', async(req, res)=>{
+app.post('/api/todos', async(req, res)=>{
     try{
         const { title } = req.body;
         const newTodo = await Todo.create({
             title,
             completed: false
         });
+        if (!title || typeof title !== 'string' || title.trim() === '') {
+            res.status(400).json({ error: 'Valid title is required' });
+        }
         res.status(201).json(newTodo);
     }catch(error){
         console.error('backend error post',error);
